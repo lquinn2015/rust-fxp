@@ -94,7 +94,7 @@ impl Display for Fxp {
 }
 
 const COS_PROD: Fxp = Fxp::cnew(39796);
-const _COS_PROD2: Fxp = Fxp::cnew(24166);
+const COS_PROD2: Fxp = Fxp::cnew(24166);
 const CORDIC_ANGLES: [Fxp; 16] = [
     Fxp::cnew(51471),
     Fxp::cnew(30385),
@@ -114,29 +114,55 @@ const CORDIC_ANGLES: [Fxp; 16] = [
     Fxp::cnew(2),
 ];
 
+fn cordic_iter(
+    theta: &Fxp,
+    x0: &Fxp,
+    y0: &Fxp,
+    phi0: &Fxp,
+    phi_i: &Fxp,
+    i: i32,
+) -> (Fxp, Fxp, Fxp, i32) {
+    if phi0 < theta {
+        let xi = x0 - (y0.clone() >> i);
+        let yi = y0 + (x0.clone() >> i);
+        (xi, yi, phi0 + phi_i, i + 1)
+    } else {
+        let xi = x0 + (y0.clone() >> i);
+        let yi = y0 - (x0.clone() >> i);
+        (xi, yi, phi0 - phi_i, i + 1)
+    }
+}
+
 fn cordic(theta: Fxp) -> (Fxp, Fxp) {
     let (cos_theta, sin_theta, _phi0, _i) = CORDIC_ANGLES.iter().fold(
         (Fxp::cnew(65536), Fxp::cnew(0), Fxp::cnew(0), 0),
-        |(x0, y0, phi0, i), phi_i| {
-            let out = if phi0 < theta {
-                let xi = &x0 - (y0.clone() >> i);
-                let yi = &y0 + (x0.clone() >> i);
-                (xi, yi, &phi0 + phi_i, i + 1)
-            } else {
-                let xi = &x0 + (y0.clone() >> i);
-                let yi = &y0 - (x0.clone() >> i);
-                (xi, yi, &phi0 - phi_i, i + 1)
-            };
-            out
-        },
+        |(x0, y0, phi0, i), phi_i| cordic_iter(&theta, &x0, &y0, &phi0, phi_i, i),
     );
     (cos_theta * COS_PROD, sin_theta * COS_PROD)
+}
+
+fn cordic2(theta: Fxp) -> (Fxp, Fxp) {
+    let (cos_theta, sin_theta, _phi0, _i) = CORDIC_ANGLES.iter().fold(
+        (Fxp::cnew(65536), Fxp::cnew(0), Fxp::cnew(0), 0),
+        |(x0, y0, phi0, i), phi_i| {
+            let out = cordic_iter(&theta, &x0, &y0, &phi0, phi_i, i);
+            cordic_iter(&theta, &out.0, &out.1, &out.2, phi_i, i)
+        },
+    );
+    (cos_theta * COS_PROD2, sin_theta * COS_PROD2)
 }
 
 fn main() {
     let (cos, sin) = cordic(Fxp::float2fixed(&0.5));
     println!(
         "cos(0.5) = {}, sin(0.5) = {}, tan(0.5) = {}",
+        cos,
+        sin,
+        &sin / &cos
+    );
+    let (cos, sin) = cordic2(Fxp::float2fixed(&2.0));
+    println!(
+        "cos(2.0) = {}, sin(2.0) = {}, tan(2.0) = {}",
         cos,
         sin,
         &sin / &cos
