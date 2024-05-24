@@ -172,7 +172,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::Fxp;
+    use crate::*;
     #[test]
     fn basic_ops() {
         let a = Fxp::float2fixed(&1.5);
@@ -195,5 +195,19 @@ mod tests {
         let a = Fxp::float2fixed(&1.5);
         let b = Fxp::float2fixed(&40.01);
         assert_eq!(b / a, Fxp { val: 1748063 });
+    }
+
+    #[test]
+    fn cordic_test() {
+        let (cos, sin) = cordic(Fxp::float2fixed(&0.5));
+        assert_eq!(cos, Fxp::cnew(57510));
+        assert_eq!(sin, Fxp::cnew(31422));
+        let (cos, sin) = cordic2(Fxp::float2fixed(&2.0));
+        assert_eq!(cos, Fxp::cnew(-27274));
+        assert_eq!(sin, Fxp::cnew(59590));
+        let (cos2, sin2) = cordic2(Fxp::float2fixed(&-2.0));
+        // Delta should be tiny but could accumulate
+        assert!((cos2 - cos).val < 10);
+        assert!((sin + sin2).val < 10);
     }
 }
