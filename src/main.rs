@@ -152,13 +152,96 @@ fn cordic2(theta: Fxp) -> (Fxp, Fxp) {
     (cos_theta * COS_PROD2, sin_theta * COS_PROD2)
 }
 
+fn pow(x: &Fxp, i: i32) -> Fxp {
+    let mut acc = x.clone();
+    if i < 0 {
+        return POS_ONE;
+    }
+    for _ in 0..i {
+        acc *= x.clone();
+    }
+    acc
+}
+
+// only up to 2^16
+fn factorial(mut i: i32) -> Fxp {
+    let mut acc = Fxp::cnew(1 << 16);
+    while i > 1 {
+        let term = Fxp::new(i << 16);
+        acc *= &term;
+        i -= 1;
+    }
+    acc
+}
+
+const POS_ONE: Fxp = Fxp::cnew(1 << 16);
+const NEG_ONE: Fxp = Fxp::cnew(-1 << 16);
+
+fn taylor_expansion(theta: Fxp) -> (Fxp, Fxp) {
+    let sin = (0..18)
+        .filter(|x| x % 2 != 0)
+        .fold(
+            (Fxp::cnew(0), theta.clone()),
+            |mut acc: (Fxp, Fxp), p: i32| {
+                let xn = pow(&acc.1, p - 1);
+                let fac = factorial(p);
+                let dir = if ((p - 1) % 4) == 0 { POS_ONE } else { NEG_ONE };
+                let term = (&xn / &fac) * dir;
+
+                acc.0 += &term;
+                //println!("p: {}, xn: {}, fac: {}, term: {}", p, xn, fac, term);
+                acc
+            },
+        )
+        .0;
+    let cos = (0..18)
+        .filter(|x| x % 2 != 1)
+        .fold(
+            (Fxp::cnew(0), theta.clone()),
+            |mut acc: (Fxp, Fxp), p: i32| {
+                let xn = pow(&acc.1, p - 1);
+                let fac = factorial(p);
+                let dir = if (p % 4) == 0 { POS_ONE } else { NEG_ONE };
+                let term = (&xn / &fac) * dir;
+
+                acc.0 += &term;
+                //println!("p: {}, xn: {}, fac: {}, term: {}", p, xn, fac, term);
+                acc
+            },
+        )
+        .0;
+    (cos, sin)
+}
+
 fn main() {
-    let (cos, sin) = cordic(Fxp::float2fixed(&0.5));
+    let (cos, sin) = taylor_expansion(Fxp::float2fixed(&0.5));
     println!(
-        "cos(0.5) = {}, sin(0.5) = {}, tan(0.5) = {}",
+        "cos(0.5) = {}, sin(0.5) = {}, tan(0.5) = {}  taylor",
         cos,
         sin,
         &sin / &cos
+    );
+
+    let (cos, sin) = cordic(Fxp::float2fixed(&0.5));
+    println!(
+        "cos(0.5) = {}, sin(0.5) = {}, tan(0.5) = {} cordic",
+        cos,
+        sin,
+        &sin / &cos
+    );
+
+    let (cos, sin) = cordic2(Fxp::float2fixed(&0.5));
+    println!(
+        "cos(0.5) = {}, sin(0.5) = {}, tan(0.5) = {} cordic2",
+        cos,
+        sin,
+        &sin / &cos
+    );
+    println!(
+        "cos(0.5) = {}, sin(0.5) = {}, tan(0.5) = {} float2fixed + language support",
+        Fxp::float2fixed(&f32::cos(0.5)),
+        Fxp::float2fixed(&f32::sin(0.5)),
+        Fxp::float2fixed(&f32::tan(0.5)),
     );
     let (cos, sin) = cordic2(Fxp::float2fixed(&2.0));
     println!(
