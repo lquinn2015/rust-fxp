@@ -1,6 +1,6 @@
 
-# Outline
-
+# Note 
+Verilog side is in progress
 
 # What is Cordic and what does it do
 
