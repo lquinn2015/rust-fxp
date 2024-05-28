@@ -1,5 +1,5 @@
 
-module Cordic(i_clk, o_cosine, o_sine, i_theta);
+module cordic(i_clk, o_cosine, o_sine, i_theta);
 
     parameter width = 16;
     
@@ -36,7 +36,7 @@ module Cordic(i_clk, o_cosine, o_sine, i_theta);
 
     genvar i,k;
     generate 
-    for (i = 0; i < width-1; i=i+1)
+    for (i = 0; i < width; i=i+1)
     begin: outer
         for(k = 0; k < 2; k=k+1)
         begin: corder_iter
