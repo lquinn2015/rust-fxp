@@ -89,7 +89,7 @@ impl Shr<i32> for Fxp {
 
 impl Display for Fxp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} [{}]", Fxp::fixed2float(self), self.val)
+        write!(f, "{} [{:x}]", Fxp::fixed2float(self), self.val)
     }
 }
 
@@ -114,6 +114,7 @@ const CORDIC_ANGLES: [Fxp; 16] = [
     Fxp::cnew(2),
 ];
 
+#[rustfmt::skip]
 fn cordic_iter(
     theta: &Fxp,
     x0: &Fxp,
@@ -122,15 +123,12 @@ fn cordic_iter(
     phi_i: &Fxp,
     i: i32,
 ) -> (Fxp, Fxp, Fxp, i32) {
-    if phi0 < theta {
-        let xi = x0 - (y0.clone() >> i);
-        let yi = y0 + (x0.clone() >> i);
-        (xi, yi, phi0 + phi_i, i + 1)
-    } else {
-        let xi = x0 + (y0.clone() >> i);
-        let yi = y0 - (x0.clone() >> i);
-        (xi, yi, phi0 - phi_i, i + 1)
-    }
+    let phi_cmp = phi0 < theta;
+    let xi = if phi_cmp { x0 - (y0.clone() >> i) } else { x0 + (y0.clone() >> i) };
+    let yi = if phi_cmp { y0 + (x0.clone() >> i) } else { y0 - (x0.clone() >> i) };
+    let phi = if phi_cmp { phi0 + phi_i } else { phi0 - phi_i };
+    println!("[{}] x: {}, y: {}, phi: {}", i, xi, yi, phi);
+    (xi, yi, phi, i + 1)
 }
 
 fn cordic(theta: Fxp) -> (Fxp, Fxp) {
@@ -214,6 +212,14 @@ fn taylor_expansion(theta: Fxp) -> (Fxp, Fxp) {
 }
 
 fn main() {
+    let (cos, sin) = cordic2(Fxp::float2fixed(&1.5));
+    println!(
+        "cos(1.5) = {}, sin(1.5) = {}, tan(1.5) = {}",
+        cos,
+        sin,
+        &sin / &cos
+    );
+    /*
     let (cos, sin) = taylor_expansion(Fxp::float2fixed(&0.5));
     println!(
         "cos(0.5) = {}, sin(0.5) = {}, tan(0.5) = {}  taylor",
@@ -250,6 +256,7 @@ fn main() {
         sin,
         &sin / &cos
     );
+    */
     //println!("{}", Fxp::float2fixed(&1.0) >> 2);
 }
 
