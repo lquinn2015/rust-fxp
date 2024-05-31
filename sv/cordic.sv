@@ -3,23 +3,22 @@ module cordic(i_clk, i_en, o_vld, o_cosine, o_sine, i_theta);
 
     localparam ITER = 16;
     localparam ITER_BITS = $clog2(ITER);
-    localparam QBITS = 16;
-    localparam RBITS = 8;
-    localparam RQBITS = QBITS + RBITS;
-    localparam RQBITS_ACC = RQBITS*2;
+    localparam QFRAC = 16;
+    localparam QINT = 8;
+    localparam QBITS = QFRAC + QINT;
     localparam width = 16;
     
     //inputs
     input i_clk;
     input i_en;
-    input signed [RQBITS-1:0] i_theta;
+    input signed [QBITS-1:0] i_theta;
     reg [31:0] r_theta;
 
-    output signed [RQBITS-1:0] o_cosine;
-    output signed [RQBITS-1:0] o_sine;
+    output signed [QBITS-1:0] o_cosine;
+    output signed [QBITS-1:0] o_sine;
     output reg o_vld;
 
-    wire signed [RQBITS-1:0] cordic_angles [0:ITER-1];
+    wire signed [QBITS-1:0] cordic_angles [0:ITER-1];
     assign cordic_angles[00] = 'h00c90f;
     assign cordic_angles[01] = 'h0076b1;
     assign cordic_angles[02] = 'h003eb6;
@@ -36,12 +35,12 @@ module cordic(i_clk, i_en, o_vld, o_cosine, o_sine, i_theta);
     assign cordic_angles[13] = 'h000008;
     assign cordic_angles[14] = 'h000004;
     assign cordic_angles[15] = 'h000002;
-    wire signed [RQBITS-1:0] cos_prod2;
+    wire signed [QBITS-1:0] cos_prod2;
     assign cos_prod2 = 'h5E66;
 
-    reg signed [RQBITS-1:0] x   [0:2*(ITER-1)];
-    reg signed [RQBITS-1:0] y   [0:2*(ITER-1)];
-    reg signed [RQBITS-1:0] phi [0:2*(ITER-1)];
+    reg signed [QBITS-1:0] x   [0:2*(ITER-1)];
+    reg signed [QBITS-1:0] y   [0:2*(ITER-1)];
+    reg signed [QBITS-1:0] phi [0:2*(ITER-1)];
     reg           [5:0]    vld;
 
     assign o_vld = vld[5];
@@ -69,7 +68,7 @@ module cordic(i_clk, i_en, o_vld, o_cosine, o_sine, i_theta);
         for(k = 0; k < 2; k=k+1)
         begin: corder_iter
             wire phi_cmp;
-            wire signed [RQBITS-1:0] x_shr, y_shr;
+            wire signed [QBITS-1:0] x_shr, y_shr;
 
             assign x_shr = x[2*i + k] >>> i;
             assign y_shr = y[2*i + k] >>> i;
@@ -86,9 +85,7 @@ module cordic(i_clk, i_en, o_vld, o_cosine, o_sine, i_theta);
     end
     endgenerate
 
-    reg signed [RQBITS_ACC-1:0] accX; assign accX =  x[2*(ITER-1)] * cos_prod2;
-    reg signed [RQBITS_ACC-1:0] accY; assign accY =  y[2*(ITER-1)] * cos_prod2;
+    fxp_smul #(QINT, QFRAC) cosine_mul (.out(o_cosine), .a(x[2*(ITER-1)]), .b(cos_prod2));
+    fxp_smul #(QINT, QFRAC) sine_mul   (.out(o_sine),   .a(y[2*(ITER-1)]), .b(cos_prod2));
 
-    assign o_cosine = accX[RQBITS_ACC-1:RBITS*2];
-    assign o_sine =   accY[RQBITS_ACC-1:RBITS*2]; 
 endmodule

@@ -1,6 +1,15 @@
 
-# Note 
-Verilog side is in progress
+# Forward 
+
+As I redid this solution in verilog I decided to change must rust implementation. Sadly
+already wrote my rust solution out. Rather I have a changed implementation in my
+rust source. Instead of trying to rotate v  = (1,0,0) to (sin($\theta$, cos($\theta$), $theta$). 
+I choose to rotate v = (1, 0, $\theta$) to (sin($\theta$, cos($\theta$), 0).
+This makes the $\theta$ compare easier as you can just check if is positive or
+negative. It also allows you not to store theta which saves a register in
+verilog. You just have to be careful with how you find the next $\theta_i$.
+This was much easier to implement in verilog correctly!
+
 
 # What is Cordic and what does it do
 
@@ -243,5 +252,14 @@ online that Hardware will usually do 40 iterations after scaling inputs but will
 gain around 1 bit of accuracy per iteration. I would need to expand my fixed
 point representation to support such accuracy but I felt content after getting 5
 bits of accuracy. 
+
+# Verilog
+I didn't do synthesis because I lacked a FPGA and verilog experience but I
+wanted to try verilog genvar keyword out because it looked so elegant and lisp
+like. To do the code gen? hw gen I used yosys and wrote a neat makefile for
+generating cxxrtl backends + testbench checking for. Ideally i would have done
+the cxx in rust but that seemed like something i didn't want to do at this time.
+The Verilog solution also uses Q8.16 which uses less flops  than Q16.16
+
 
 

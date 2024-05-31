@@ -116,35 +116,34 @@ const CORDIC_ANGLES: [Fxp; 16] = [
 
 #[rustfmt::skip]
 fn cordic_iter(
-    theta: &Fxp,
     x0: &Fxp,
     y0: &Fxp,
     phi0: &Fxp,
     phi_i: &Fxp,
     i: i32,
 ) -> (Fxp, Fxp, Fxp, i32) {
-    let phi_cmp = phi0 < theta;
+    let phi_cmp = phi0.val > 0;
     let xi = if phi_cmp { x0 - (y0.clone() >> i) } else { x0 + (y0.clone() >> i) };
     let yi = if phi_cmp { y0 + (x0.clone() >> i) } else { y0 - (x0.clone() >> i) };
-    let phi = if phi_cmp { phi0 + phi_i } else { phi0 - phi_i };
+    let phi = if phi_cmp { phi0 - phi_i } else { phi0 + phi_i };
     println!("[{}] x: {}, y: {}, phi: {}", i, xi, yi, phi);
     (xi, yi, phi, i + 1)
 }
 
 fn cordic(theta: Fxp) -> (Fxp, Fxp) {
     let (cos_theta, sin_theta, _phi0, _i) = CORDIC_ANGLES.iter().fold(
-        (Fxp::cnew(65536), Fxp::cnew(0), Fxp::cnew(0), 0),
-        |(x0, y0, phi0, i), phi_i| cordic_iter(&theta, &x0, &y0, &phi0, phi_i, i),
+        (Fxp::cnew(65536), Fxp::cnew(0), theta, 0),
+        |(x0, y0, phi0, i), phi_i| cordic_iter(&x0, &y0, &phi0, phi_i, i),
     );
     (cos_theta * COS_PROD, sin_theta * COS_PROD)
 }
 
 fn cordic2(theta: Fxp) -> (Fxp, Fxp) {
     let (cos_theta, sin_theta, _phi0, _i) = CORDIC_ANGLES.iter().fold(
-        (Fxp::cnew(65536), Fxp::cnew(0), Fxp::cnew(0), 0),
+        (Fxp::cnew(65536), Fxp::cnew(0), theta, 0),
         |(x0, y0, phi0, i), phi_i| {
-            let out = cordic_iter(&theta, &x0, &y0, &phi0, phi_i, i);
-            cordic_iter(&theta, &out.0, &out.1, &out.2, phi_i, i)
+            let out = cordic_iter(&x0, &y0, &phi0, phi_i, i);
+            cordic_iter(&out.0, &out.1, &out.2, phi_i, i)
         },
     );
     (cos_theta * COS_PROD2, sin_theta * COS_PROD2)
@@ -219,7 +218,6 @@ fn main() {
         sin,
         &sin / &cos
     );
-    /*
     let (cos, sin) = taylor_expansion(Fxp::float2fixed(&0.5));
     println!(
         "cos(0.5) = {}, sin(0.5) = {}, tan(0.5) = {}  taylor",
@@ -256,7 +254,6 @@ fn main() {
         sin,
         &sin / &cos
     );
-    */
     //println!("{}", Fxp::float2fixed(&1.0) >> 2);
 }
 
