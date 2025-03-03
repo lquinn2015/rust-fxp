@@ -61,7 +61,7 @@ calculate sin(u) or cos(u). If this is the case we get the following diagram
       -pi/2                                                                                                                                                    
         
 Let C be a line of length 1 that terminates on the unit circle. Than we can say that
-(A,B) = (cos($\theta$), sin($\theta)). So the game is on than if we can generate C we have
+(A,B) = (cos($\theta$), sin($\theta$)). So the game is on than if we can generate C we have
 both cosine and sine computed but the question becomes how? Well the solution is
 we are going to rotate V(x,y) = [1, 0] by angle $\theta$ which is known. This can be
 write in matrix forum like 
