@@ -1,9 +1,9 @@
 
 # Forward 
 
-As I redid this solution in verilog I decided to change must rust implementation. Sadly
-already wrote my rust solution out. Rather I have a changed implementation in my
-rust source. Instead of trying to rotate v  = (1,0,0) to (sin($\theta$, cos($\theta$), $theta$). 
+As I redid this solution in verilog, I decided to change my rust implementation. Sadly
+already wrote my rust solution out. My implmentation in rust will not much the soruce code.
+Instead of trying to rotate v  = (1,0,0) to (sin($\theta$, cos($\theta$), $theta$). 
 I choose to rotate v = (1, 0, $\theta$) to (sin($\theta$, cos($\theta$), 0).
 This makes the $\theta$ compare easier as you can just check if is positive or
 negative. It also allows you not to store theta which saves a register in
